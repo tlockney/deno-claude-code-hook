@@ -500,3 +500,230 @@ export const sessionEnd: HookDef<
   typeof schemas.sessionEndInput,
   typeof schemas.sessionEndOutput
 > = defineHook(schemas.sessionEndInput, schemas.sessionEndOutput, {});
+
+/**
+ * Runs when a `CLAUDE.md` or `.claude/rules/*.md` file is loaded into context.
+ *
+ * Useful for auditing or logging which instruction files are active in a
+ * session. Cannot block loading.
+ *
+ * @see {@link https://code.claude.com/docs/en/hooks#instructionsloaded | InstructionsLoaded Hook Documentation}
+ */
+export const instructionsLoaded: HookDef<
+  typeof schemas.instructionsLoadedInput,
+  typeof schemas.instructionsLoadedOutput
+> = defineHook(
+  schemas.instructionsLoadedInput,
+  schemas.instructionsLoadedOutput,
+  {},
+);
+
+/**
+ * Runs when a turn ends due to an API error (rate limit, auth failure, etc.).
+ *
+ * Useful for surfacing notifications on failure. Output is ignored.
+ *
+ * @see {@link https://code.claude.com/docs/en/hooks#stopfailure | StopFailure Hook Documentation}
+ */
+export const stopFailure: HookDef<
+  typeof schemas.stopFailureInput,
+  typeof schemas.stopFailureOutput
+> = defineHook(schemas.stopFailureInput, schemas.stopFailureOutput, {});
+
+/**
+ * Runs when the permission dialog appears for a tool call.
+ *
+ * Allows automated decisions in place of user interaction. Return
+ * `hookSpecificOutput.decision.behavior` as `"allow"` or `"deny"`.
+ *
+ * @see {@link https://code.claude.com/docs/en/hooks#permissionrequest | PermissionRequest Hook Documentation}
+ */
+export const permissionRequest: HookDef<
+  typeof schemas.permissionRequestInput,
+  typeof schemas.permissionRequestOutput
+> = defineHook(
+  schemas.permissionRequestInput,
+  schemas.permissionRequestOutput,
+  {},
+);
+
+/**
+ * Runs when the auto-mode classifier denies a tool call.
+ *
+ * Return `hookSpecificOutput.retry: true` to retry the tool call. Cannot
+ * otherwise block.
+ *
+ * @see {@link https://code.claude.com/docs/en/hooks#permissiondenied | PermissionDenied Hook Documentation}
+ */
+export const permissionDenied: HookDef<
+  typeof schemas.permissionDeniedInput,
+  typeof schemas.permissionDeniedOutput
+> = defineHook(
+  schemas.permissionDeniedInput,
+  schemas.permissionDeniedOutput,
+  {},
+);
+
+/**
+ * Runs after a tool execution fails.
+ *
+ * Can attach `additionalContext` for Claude to consider alongside the error.
+ * Cannot block (the tool has already failed).
+ *
+ * @see {@link https://code.claude.com/docs/en/hooks#posttooluosefailure | PostToolUseFailure Hook Documentation}
+ */
+export const postToolUseFailure: HookDef<
+  typeof schemas.postToolUseFailureInput,
+  typeof schemas.postToolUseFailureOutput
+> = defineHook(
+  schemas.postToolUseFailureInput,
+  schemas.postToolUseFailureOutput,
+  {},
+);
+
+/**
+ * Runs when an MCP server requests user input during a tool call.
+ *
+ * Return `hookSpecificOutput.action` of `"accept"`, `"decline"`, or `"cancel"`
+ * (with `content` for accept) to respond on the user's behalf.
+ *
+ * @see {@link https://code.claude.com/docs/en/hooks#elicitation | Elicitation Hook Documentation}
+ */
+export const elicitation: HookDef<
+  typeof schemas.elicitationInput,
+  typeof schemas.elicitationOutput
+> = defineHook(schemas.elicitationInput, schemas.elicitationOutput, {});
+
+/**
+ * Runs after the user responds to an MCP elicitation, before the response is
+ * sent to the server.
+ *
+ * Can transform or veto the user's response.
+ *
+ * @see {@link https://code.claude.com/docs/en/hooks#elicitationresult | ElicitationResult Hook Documentation}
+ */
+export const elicitationResult: HookDef<
+  typeof schemas.elicitationResultInput,
+  typeof schemas.elicitationResultOutput
+> = defineHook(
+  schemas.elicitationResultInput,
+  schemas.elicitationResultOutput,
+  {},
+);
+
+/**
+ * Runs when a subagent is spawned (before it begins work).
+ *
+ * Can attach `additionalContext` for the subagent.
+ *
+ * @see {@link https://code.claude.com/docs/en/hooks#subagentstart | SubagentStart Hook Documentation}
+ */
+export const subagentStart: HookDef<
+  typeof schemas.subagentStartInput,
+  typeof schemas.subagentStartOutput
+> = defineHook(schemas.subagentStartInput, schemas.subagentStartOutput, {});
+
+/**
+ * Runs when an agent-team teammate is about to go idle.
+ *
+ * Return `decision: "block"` with a `reason` to keep the teammate active.
+ *
+ * @see {@link https://code.claude.com/docs/en/hooks#teammateidle | TeammateIdle Hook Documentation}
+ */
+export const teammateIdle: HookDef<
+  typeof schemas.teammateIdleInput,
+  typeof schemas.teammateIdleOutput
+> = defineHook(schemas.teammateIdleInput, schemas.teammateIdleOutput, {});
+
+/**
+ * Runs when a task is being created via `TaskCreate`.
+ *
+ * Return `decision: "block"` with a `reason` to prevent the task.
+ *
+ * @see {@link https://code.claude.com/docs/en/hooks#taskcreated | TaskCreated Hook Documentation}
+ */
+export const taskCreated: HookDef<
+  typeof schemas.taskCreatedInput,
+  typeof schemas.taskCreatedOutput
+> = defineHook(schemas.taskCreatedInput, schemas.taskCreatedOutput, {});
+
+/**
+ * Runs when a task is being marked as completed.
+ *
+ * Return `decision: "block"` with a `reason` to prevent completion.
+ *
+ * @see {@link https://code.claude.com/docs/en/hooks#taskcompleted | TaskCompleted Hook Documentation}
+ */
+export const taskCompleted: HookDef<
+  typeof schemas.taskCompletedInput,
+  typeof schemas.taskCompletedOutput
+> = defineHook(schemas.taskCompletedInput, schemas.taskCompletedOutput, {});
+
+/**
+ * Runs when a watched file changes on disk.
+ *
+ * Configured with a filename matcher (e.g. `.envrc|.env`). Cannot block.
+ *
+ * @see {@link https://code.claude.com/docs/en/hooks#filechanged | FileChanged Hook Documentation}
+ */
+export const fileChanged: HookDef<
+  typeof schemas.fileChangedInput,
+  typeof schemas.fileChangedOutput
+> = defineHook(schemas.fileChangedInput, schemas.fileChangedOutput, {});
+
+/**
+ * Runs when the working directory changes during a session.
+ *
+ * @see {@link https://code.claude.com/docs/en/hooks#cwdchanged | CwdChanged Hook Documentation}
+ */
+export const cwdChanged: HookDef<
+  typeof schemas.cwdChangedInput,
+  typeof schemas.cwdChangedOutput
+> = defineHook(schemas.cwdChangedInput, schemas.cwdChangedOutput, {});
+
+/**
+ * Runs when a configuration file changes during a session.
+ *
+ * Return `decision: "block"` with a `reason` to reject the change.
+ *
+ * @see {@link https://code.claude.com/docs/en/hooks#configchange | ConfigChange Hook Documentation}
+ */
+export const configChange: HookDef<
+  typeof schemas.configChangeInput,
+  typeof schemas.configChangeOutput
+> = defineHook(schemas.configChangeInput, schemas.configChangeOutput, {});
+
+/**
+ * Runs after a compact operation completes.
+ *
+ * @see {@link https://code.claude.com/docs/en/hooks#postcompact | PostCompact Hook Documentation}
+ */
+export const postCompact: HookDef<
+  typeof schemas.postCompactInput,
+  typeof schemas.postCompactOutput
+> = defineHook(schemas.postCompactInput, schemas.postCompactOutput, {});
+
+/**
+ * Runs when a git worktree is being created.
+ *
+ * Return `hookSpecificOutput.worktreePath` (or print the path to stdout) to
+ * supply the created worktree location. Any non-zero exit fails the creation.
+ *
+ * @see {@link https://code.claude.com/docs/en/hooks#worktreecreate | WorktreeCreate Hook Documentation}
+ */
+export const worktreeCreate: HookDef<
+  typeof schemas.worktreeCreateInput,
+  typeof schemas.worktreeCreateOutput
+> = defineHook(schemas.worktreeCreateInput, schemas.worktreeCreateOutput, {});
+
+/**
+ * Runs when a git worktree is being removed.
+ *
+ * Failures are only surfaced in debug mode.
+ *
+ * @see {@link https://code.claude.com/docs/en/hooks#worktreeremove | WorktreeRemove Hook Documentation}
+ */
+export const worktreeRemove: HookDef<
+  typeof schemas.worktreeRemoveInput,
+  typeof schemas.worktreeRemoveOutput
+> = defineHook(schemas.worktreeRemoveInput, schemas.worktreeRemoveOutput, {});

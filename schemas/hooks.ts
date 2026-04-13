@@ -322,3 +322,352 @@ export const sessionEndInput = genericInput.extend({
 });
 
 export const sessionEndOutput = genericOutput;
+
+export const instructionsLoadedInput = genericInput.extend({
+  hook_event_name: z.literal("InstructionsLoaded"),
+
+  /** Absolute path to the loaded instruction file. */
+  file_path: z.string(),
+
+  /** The kind of memory that was loaded (e.g. "project", "user"). */
+  memory_type: z.string(),
+
+  /** Why the file was loaded (e.g. "session_start", "nested_traversal"). */
+  load_reason: z.string(),
+
+  /** Globs that matched, when applicable. */
+  globs: z.array(z.string()).optional(),
+
+  /** Path that triggered the load (for nested/glob matches). */
+  trigger_file_path: z.string().optional(),
+
+  /** Parent file when the load came from an `@include` directive. */
+  parent_file_path: z.string().optional(),
+});
+
+export const instructionsLoadedOutput = genericOutput;
+
+export const stopFailureInput = genericInput.extend({
+  hook_event_name: z.literal("StopFailure"),
+
+  /** Details about the API error that ended the turn. */
+  error: z.record(z.string(), z.unknown()),
+});
+
+export const stopFailureOutput = genericOutput;
+
+const permissionDecisionBehavior = z.discriminatedUnion("behavior", [
+  z.object({
+    behavior: z.literal("allow"),
+    /** Modifications to tool inputs prior to execution. */
+    updatedInput: z.record(z.string(), z.unknown()).optional(),
+    /** Permission rules to persist for the session. */
+    updatedPermissions: z.array(z.unknown()).optional(),
+    /** Message shown to the user. */
+    message: z.string().optional(),
+  }),
+  z.object({
+    behavior: z.literal("deny"),
+    message: z.string().optional(),
+  }),
+]);
+
+export const permissionRequestInput = genericInput
+  .extend({
+    hook_event_name: z.literal("PermissionRequest"),
+    /** Current permission mode. */
+    permission_mode: permissionMode,
+
+    /** Suggestions surfaced alongside the permission prompt. */
+    permission_suggestions: z.array(z.unknown()).optional(),
+  })
+  .and(preTool);
+
+export const permissionRequestOutput = genericOutput.and(
+  z.object({
+    hookSpecificOutput: z
+      .object({
+        hookEventName: z.literal("PermissionRequest"),
+        decision: permissionDecisionBehavior,
+      })
+      .optional(),
+  }),
+);
+
+export const permissionDeniedInput = genericInput
+  .extend({
+    hook_event_name: z.literal("PermissionDenied"),
+    permission_mode: permissionMode,
+
+    /** Why the auto-mode classifier denied the call. */
+    reason: z.string(),
+  })
+  .and(preTool);
+
+export const permissionDeniedOutput = genericOutput.and(
+  z.object({
+    hookSpecificOutput: z
+      .object({
+        hookEventName: z.literal("PermissionDenied"),
+        /** When true, the tool call is retried. */
+        retry: z.boolean(),
+      })
+      .optional(),
+  }),
+);
+
+export const postToolUseFailureInput = genericInput
+  .extend({
+    hook_event_name: z.literal("PostToolUseFailure"),
+    permission_mode: permissionMode,
+
+    /** Details about the tool-execution failure. */
+    error: z.unknown(),
+
+    /** True when the failure was caused by a user interrupt. */
+    is_interrupt: z.boolean().optional(),
+  })
+  .and(preTool);
+
+export const postToolUseFailureOutput = genericOutput.and(
+  z.object({
+    hookSpecificOutput: z
+      .object({
+        hookEventName: z.literal("PostToolUseFailure"),
+        additionalContext: z.string(),
+      })
+      .optional(),
+  }),
+);
+
+const elicitationAction = z.enum(["accept", "decline", "cancel"]);
+
+export const elicitationInput = genericInput.extend({
+  hook_event_name: z.literal("Elicitation"),
+
+  /** MCP server that issued the elicitation request. */
+  server_name: z.string().optional(),
+
+  /** Opaque request payload from the MCP server. */
+  request: z.unknown().optional(),
+});
+
+export const elicitationOutput = genericOutput.and(
+  z.object({
+    hookSpecificOutput: z
+      .object({
+        hookEventName: z.literal("Elicitation"),
+        action: elicitationAction,
+        /** Form field values when `action` is "accept". */
+        content: z.record(z.string(), z.unknown()).optional(),
+      })
+      .optional(),
+  }),
+);
+
+export const elicitationResultInput = genericInput.extend({
+  hook_event_name: z.literal("ElicitationResult"),
+  server_name: z.string().optional(),
+
+  /** Opaque user-response payload. */
+  response: z.unknown().optional(),
+});
+
+export const elicitationResultOutput = genericOutput.and(
+  z.object({
+    hookSpecificOutput: z
+      .object({
+        hookEventName: z.literal("ElicitationResult"),
+        action: elicitationAction,
+        content: z.record(z.string(), z.unknown()).optional(),
+      })
+      .optional(),
+  }),
+);
+
+export const subagentStartInput = genericInput.extend({
+  hook_event_name: z.literal("SubagentStart"),
+
+  /** Unique id of the spawned subagent. */
+  agent_id: z.string(),
+
+  /** Type of agent (e.g. "Bash", "Explore", "Plan", or a custom name). */
+  agent_type: z.string(),
+});
+
+export const subagentStartOutput = genericOutput.and(
+  z.object({
+    hookSpecificOutput: z
+      .object({
+        hookEventName: z.literal("SubagentStart"),
+        additionalContext: z.string(),
+      })
+      .optional(),
+  }),
+);
+
+export const teammateIdleInput = genericInput.extend({
+  hook_event_name: z.literal("TeammateIdle"),
+
+  /** Teammate identity and state. */
+  teammate: z.record(z.string(), z.unknown()).optional(),
+});
+
+export const teammateIdleOutput = genericOutput.and(
+  z.discriminatedUnion("decision", [
+    z.object({
+      decision: z.literal("block"),
+      reason: z.string(),
+    }),
+    z.object({
+      decision: z.literal("allow").optional(),
+    }),
+  ]),
+);
+
+export const taskCreatedInput = genericInput.extend({
+  hook_event_name: z.literal("TaskCreated"),
+
+  task_id: z.string(),
+  task_subject: z.string(),
+  task_description: z.string().optional(),
+  teammate_name: z.string().optional(),
+  team_name: z.string().optional(),
+});
+
+export const taskCreatedOutput = genericOutput.and(
+  z.discriminatedUnion("decision", [
+    z.object({
+      decision: z.literal("block"),
+      reason: z.string(),
+    }),
+    z.object({
+      decision: z.literal("allow").optional(),
+    }),
+  ]),
+);
+
+export const taskCompletedInput = genericInput.extend({
+  hook_event_name: z.literal("TaskCompleted"),
+
+  task_id: z.string(),
+  task_subject: z.string().optional(),
+  teammate_name: z.string().optional(),
+  team_name: z.string().optional(),
+});
+
+export const taskCompletedOutput = genericOutput.and(
+  z.discriminatedUnion("decision", [
+    z.object({
+      decision: z.literal("block"),
+      reason: z.string(),
+    }),
+    z.object({
+      decision: z.literal("allow").optional(),
+    }),
+  ]),
+);
+
+export const fileChangedInput = genericInput.extend({
+  hook_event_name: z.literal("FileChanged"),
+
+  /** Absolute path to the file that changed. */
+  file_path: z.string(),
+
+  /** Kind of change detected (e.g. "created", "modified", "deleted"). */
+  change_type: z.string(),
+});
+
+export const fileChangedOutput = genericOutput;
+
+export const cwdChangedInput = genericInput.extend({
+  hook_event_name: z.literal("CwdChanged"),
+
+  /** Previous working directory. */
+  old_cwd: z.string(),
+
+  /** New working directory. */
+  new_cwd: z.string(),
+});
+
+export const cwdChangedOutput = genericOutput;
+
+export const configChangeInput = genericInput.extend({
+  hook_event_name: z.literal("ConfigChange"),
+
+  /** Which config scope changed. */
+  config_source: z.enum([
+    "user_settings",
+    "project_settings",
+    "local_settings",
+    "policy_settings",
+    "skills",
+  ]),
+
+  /** Fields that changed. */
+  changed_fields: z.array(z.string()).optional(),
+});
+
+export const configChangeOutput = genericOutput.and(
+  z.discriminatedUnion("decision", [
+    z.object({
+      decision: z.literal("block"),
+      reason: z.string(),
+    }),
+    z.object({
+      decision: z.literal("allow").optional(),
+    }),
+  ]),
+);
+
+export const postCompactInput = genericInput
+  .extend({
+    hook_event_name: z.literal("PostCompact"),
+  })
+  .and(
+    z.discriminatedUnion("trigger", [
+      z.object({
+        /** Follow-up to an auto-compact. */
+        trigger: z.literal("auto"),
+      }),
+      z.object({
+        /** Follow-up to a manual `/compact`. */
+        trigger: z.literal("manual"),
+        custom_instructions: z
+          .string()
+          .optional()
+          .transform((it) => (it && it.length > 0 ? it : undefined)),
+      }),
+    ]),
+  );
+
+export const postCompactOutput = genericOutput;
+
+export const worktreeCreateInput = genericInput.extend({
+  hook_event_name: z.literal("WorktreeCreate"),
+
+  /** Requested parameters for the new worktree. */
+  parameters: z.record(z.string(), z.unknown()).optional(),
+});
+
+export const worktreeCreateOutput = genericOutput.and(
+  z.object({
+    hookSpecificOutput: z
+      .object({
+        hookEventName: z.literal("WorktreeCreate"),
+
+        /** Path of the created worktree. */
+        worktreePath: z.string(),
+      })
+      .optional(),
+  }),
+);
+
+export const worktreeRemoveInput = genericInput.extend({
+  hook_event_name: z.literal("WorktreeRemove"),
+
+  /** Path of the worktree being removed. */
+  worktree_path: z.string().optional(),
+});
+
+export const worktreeRemoveOutput = genericOutput;
